@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.pjt.ssafybuddy.mapper.BoardMapper">
+    <resultMap id="BoardResultMap" type="com.pjt.ssafybuddy.entity.board.Board">
+        <id property="id" column="id"/>
+        <result property="category" column="category"/>
+        <result property="content" column="content"/>
+        <result property="title" column="title"/>
+        <result property="writer" column="writer"/>
+        <result property="writeDate" column="write_date" />
+        <result property="readCount" column="read_count"/>
+        <result property="likeCount" column="like_count"/>
+        <result property="commentCount" column="comment_count"/>
+    </resultMap>
+    <insert id="insert" parameterType="com.pjt.ssafybuddy.dto.BoardDTO">
+        insert into board(category, content, title, writer, read_count, like_count, comment_count)
+        values (#{category}, #{content}, #{title}, #{writer}, 0, 0, 0)
+    </insert>
+    <select id="selectById" resultMap="BoardResultMap">
+        select  *
+        from board
+        where id = #{id}
+    </select>
+    <select id="findAllPost" resultMap="BoardResultMap">
+        select * from board order by write_date desc
+    </select>
+    <select id="findPostByCategory" resultMap="BoardResultMap">
+        select * from board where category = #{category} order by write_date desc
+    </select>
+    <update id="updateBoardLike">
+        update board
+        set like_count = like_count + 1
+        where id = #{boardId}
+    </update>
+    <update id="deleteBoardLike">
+        update board
+        set like_count = like_count - 1
+        where id = #{boardId}
+    </update>
+    <update id="updateBoardComment">
+        update board
+        set comment_count = comment_count + 1
+        where id = #{boardId}
+    </update>
+    <update id="updateReadCount">
+        update board
+        set read_count = read_count + 1
+        where id = #{id}
+    </update>
+    <select id="findPostBLikeCountSort" resultMap="BoardResultMap">
+        select * from board where category = #{category} order by like_count desc
+    </select>
+    <select id="findPostBReadCountSort" resultMap="BoardResultMap">
+        select * from board where category = #{category} order by read_count desc
+    </select>
+    <select id="findPostBCommentCountSort" resultMap="BoardResultMap">
+        select * from board where category = #{category} order by comment_count desc
+    </select>
+    <select id="findPopularPost" resultMap="BoardResultMap">
+        SELECT p.id,
+               p.category,
+               p.content,
+               p.title,
+               p.writer,
+               p.write_date,
+               p.read_count,
+               p.like_count,
+               p.comment_count,
+               (p.read_count * 0.5 + p.like_count * 0.3 + p.comment_count * 0.2) as score
+        FROM board p
+        ORDER BY score DESC
+            LIMIT 5
+    </select>
+    <select id="findRecentPopularPost" resultMap="BoardResultMap">
+        SELECT p.id,
+               p.category,
+               p.content,
+               p.title,
+               p.writer,
+               p.write_date,
+               p.read_count,
+               p.like_count,
+               p.comment_count,
+               (p.read_count * 0.5 + p.like_count * 0.3 + p.comment_count * 0.2) as score
+        FROM board p
+        WHERE p.write_date > NOW() - INTERVAL 5 DAY
+        ORDER BY score DESC
+            LIMIT 5;
+    </select>
+    <select id="selectMyPost" resultMap="BoardResultMap">
+        select * from board
+        where writer = #{userId}
+    </select>
+    <select id="selectMyLikedPost" resultMap="BoardResultMap">
+        select
+            b.id,
+            b.category,
+            b.content,
+            b.title,
+            b.writer,
+            b.write_date,
+            b.read_count,
+            b.like_count,
+            b.comment_count
+        from board b
+        inner join board_like bl on b.id = bl.board_id
+        where bl.user_id = #{userId}
+    </select>
+    <select id="selectSameCampus" resultMap="BoardResultMap">
+        SELECT b.*
+        FROM board b
+                 JOIN member m ON b.writer = m.user_id
+        WHERE b.category = #{category} AND m.campus = #{campus}
+    </select>
+</mapper>
